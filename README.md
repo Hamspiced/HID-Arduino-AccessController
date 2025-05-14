@@ -3,10 +3,15 @@ This is a project repository for creating a full fledged door access controller 
 
 ## Parts
  [Arduino Nano](https://a.co/d/4Q9VMcR) - $16.49 per 3 or $5.49 ea
+ 
  [USB-C Pigtail](https://a.co/d/i3n7h48) - $7.99 per 10 or $0.80 ea
+ 
  [Arduino Breakout Board](https://a.co/d/hGXZX4y) - $8.79 per 3 or $2.93 ea
+ 
  [5v Buck Converter](https://a.co/d/7Qql78y) - $11.59 per 5 or $2.32 ea
+ 
  [i2c 2 Color OLED](https://a.co/d/0r9uNRJ) - $13.98 per 5 or $2.80 ea
+ 
  HID R10 or R15 Multiclass Reader - Ebay or Marketplace Price Varies between 20-90$ Any reader should work that uses the Wiegand protocol
 
 ## 3d Printed Cases
