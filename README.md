@@ -24,26 +24,41 @@ This is a project repository for creating a full fledged door access controller 
  R10 Case STL - Top
  R10 Case STL - Bottom
 
-##Pinout
- ### 🔌 HID Reader to Arduino Uno
- Black   → GND
- Green   → D2
- White   → D3
- Brown   → D5
- Orange  → D6
- Yellow  → A3
+## 📌 Pinout Connections
 
- ### 📟 OLED to Arduino
- VCC     → 5V
- GND     → GND
- SCL     → A5
- SDA     → A4
- 
- ### ⚡ USB-C Pigtail Power In to Step-Down Converter
- Black   → - IN
- Red     → + IN
- - OUT   → GND
- + OUT   → VIN
+### 🔌 HID Reader to Arduino Uno
+
+| HID Wire Color | Arduino Uno Pin |
+|----------------|------------------|
+| Black          | GND              |
+| Green          | D2               |
+| White          | D3               |
+| Brown          | D5               |
+| Orange         | D6               |
+| Yellow         | A3               |
+
+### 📟 OLED to Arduino
+
+| OLED Pin | Arduino Uno Pin |
+|----------|------------------|
+| VCC      | 5V               |
+| GND      | GND              |
+| SCL      | A5               |
+| SDA      | A4               |
+
+### ⚡ Power Input to Step-Down Converter
+
+| Power Input Wire | Step-Down Pin |
+|------------------|----------------|
+| Black            | - IN           |
+| Red              | + IN           |
+
+### 🔋 Step-Down Converter to Arduino
+
+| Step-Down Pin | Arduino Uno Pin |
+|---------------|------------------|
+| - OUT         | GND              |
+| + OUT         | VIN              |
 
  Note: Match the Pins to the pin on that actual microcontroller and not to the printed labels on the breakout board.
 
