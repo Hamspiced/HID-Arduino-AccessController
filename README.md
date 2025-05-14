@@ -102,6 +102,15 @@ when Remove mode is selected if that card is scanned it is removed from the cont
 TODO: Scanning the remove mode card 3 times will reset all added cards (not mode cards)
 
 
+
+## 🙏 Acknowledgments
+
+Huge thanks to [Peekaboo](https://github.com/Peekaboo-ICU) for their invaluable support in helping bring this project to life.  
+From debugging my bad code to offering key insights and improvements, their contributions were instrumental in getting this over the finish line.  
+
+Explore more of their work at [Peekaboo.icu](https://peekaboo.icu)
+
+
  
 ## License
 
