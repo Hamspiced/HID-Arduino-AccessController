@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RFID Access Console</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #0b0c10;
+      color: #66fcf1;
+      font-family: 'Courier New', Courier, monospace;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #45a29e;
+    }
+    .info, .controls {
+      border: 1px solid #1f2833;
+      background: #1f2833;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+    }
+    button {
+      background: #0b0c10;
+      border: 1px solid #66fcf1;
+      color: #66fcf1;
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 14px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a29e;
+      color: #0b0c10;
+    }
+  </style>
+</head>
+<body>
+  <h1>ESP32 RFID Console</h1>
+
+  <div class="info">
+    <p><strong>Current Mode:</strong> <span id="mode">...</span></p>
+    <p><strong>Card Hex:</strong> <span id="card">...</span></p>
+    <p><strong>Facility Code:</strong> <span id="fc">...</span></p>
+    <p><strong>Card Number:</strong> <span id="id">...</span></p>
+  </div>
+
+  <div class="controls">
+    <h2>Controls</h2>
+    <button onclick="setMode(1)">READ MODE</button>
+    <button onclick="setMode(2)">DOOR MODE</button>
+    <button onclick="setMode(3)">ADD MODE</button>
+    <button onclick="setMode(4)">REMOVE MODE</button>
+    <button onclick="triggerDoor()">TRIGGER DOOR</button>
+  </div>
+
+  <script>
+    function fetchStatus() {
+      fetch("/status")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("mode").textContent = data.mode;
+          document.getElementById("card").textContent = data.card;
+          document.getElementById("fc").textContent = data.fc;
+          document.getElementById("id").textContent = data.id;
+        });
+    }
+
+    function setMode(mode) {
+      fetch("/mode?m=" + mode);
+    }
+
+    function triggerDoor() {
+      fetch("/trigger");
+    }
+
+    setInterval(fetchStatus, 1000);
+    fetchStatus();
+  </script>
+</body>
+</html>
