@@ -40,14 +40,12 @@
 </head>
 <body>
   <h1>ESP32 RFID Console</h1>
-
   <div class="info">
     <p><strong>Current Mode:</strong> <span id="mode">...</span></p>
     <p><strong>Card Hex:</strong> <span id="card">...</span></p>
     <p><strong>Facility Code:</strong> <span id="fc">...</span></p>
     <p><strong>Card Number:</strong> <span id="id">...</span></p>
   </div>
-
   <div class="controls">
     <h2>Controls</h2>
     <button onclick="setMode(1)">READ MODE</button>
@@ -56,7 +54,6 @@
     <button onclick="setMode(4)">REMOVE MODE</button>
     <button onclick="triggerDoor()">TRIGGER DOOR</button>
   </div>
-
   <script>
     function fetchStatus() {
       fetch("/status")
@@ -68,15 +65,12 @@
           document.getElementById("id").textContent = data.id;
         });
     }
-
     function setMode(mode) {
       fetch("/mode?m=" + mode);
     }
-
     function triggerDoor() {
       fetch("/trigger");
     }
-
     setInterval(fetchStatus, 1000);
     fetchStatus();
   </script>
