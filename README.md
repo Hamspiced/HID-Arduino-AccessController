@@ -1,7 +1,7 @@
 # HID-Arduino-AccessController
 This is a project repository for creating a full fledged door access controller using an HID Reader, Arduino, and i2c screen.  This project will allow you to use the reader as a simple badge scanner, act as a door controller, identify authorized access control cards, add cards, and delete cards.
 
-##Parts
+## Parts
  [Arduino Nano](https://a.co/d/4Q9VMcR) - $16.49 per 3 or $5.49 ea
  [USB-C Pigtail](https://a.co/d/i3n7h48) - $7.99 per 10 or $0.80 ea
  [Arduino Breakout Board](https://a.co/d/hGXZX4y) - $8.79 per 3 or $2.93 ea
@@ -9,7 +9,7 @@ This is a project repository for creating a full fledged door access controller 
  [i2c 2 Color OLED](https://a.co/d/0r9uNRJ) - $13.98 per 5 or $2.80 ea
  HID R10 or R15 Multiclass Reader - Ebay or Marketplace Price Varies between 20-90$ Any reader should work that uses the Wiegand protocol
 
-##3d Printed Cases
+## 3d Printed Cases
 
  I have the cases uploaded to Thingiverse but in case it goes down ill attach them to the repository.  Ive made 2 cases for the two different form factors of the Rp15 and 
  R10 Multiclass Se Readers 
@@ -42,7 +42,7 @@ This is a project repository for creating a full fledged door access controller 
 
  Note: Match the Pins to the pin on that actual microcontroller and not to the printed labels on the breakout board.
 
-##Assembly
+## Assembly
  Next assemble the OLED into the case, you may need a dab of hot glue to secureit. 
  Attach the Readerto the case next its easiest to keep the base plate on and thread the screws down from the reader into the case and use nuts to secure the case to the reader and trim off excess of the screw.
  attach the breakout board to the bottom case
@@ -53,7 +53,7 @@ This is a project repository for creating a full fledged door access controller 
 
 Note: When programming you have to connect USB C directly to the arduino, The USB-C Pigtail is power only it wont pass data through so you cant update your Arduino with this connection.  Likewise you cannot power the reader directly by the Arduino power, it isnt poweful enough for that.
 
-#Flashing Arduino via Arduino IDE
+# Flashing Arduino via Arduino IDE
 
 Download and install Arduino IDE.
 You can copy the code file itself, or copy and paste the code into IDE.  Some MCU's from china require you to select old bootloader, or power up while pressing the reset button. 
