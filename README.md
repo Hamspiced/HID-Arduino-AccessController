@@ -1,6 +1,9 @@
 # HID-Arduino-AccessController
 This is a project repository for creating a full fledged door access controller using an HID Reader, Arduino, and i2c screen.  This project will allow you to use the reader as a simple badge scanner, act as a door controller, identify authorized access control cards, add cards, and delete cards.
 
+![R15 Door Simulator](https://github.com/Hamspiced/HID-Arduino-AccessController/raw/main/Images/R15%20Door%20Simulator2.jpeg)
+
+
 ## Parts
  [Arduino Nano](https://a.co/d/4Q9VMcR) - $16.49 per 3 or $5.49 ea
  
