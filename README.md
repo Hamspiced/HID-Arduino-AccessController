@@ -19,10 +19,14 @@ This is a project repository for creating a full fledged door access controller 
  I have the cases uploaded to Thingiverse but in case it goes down ill attach them to the repository.  Ive made 2 cases for the two different form factors of the Rp15 and 
  R10 Multiclass Se Readers 
  
- RP15 Case STL - Top
- RP15 Case STL - Bottom
- R10 Case STL - Top
- R10 Case STL - Bottom
+ [RP15 Case STL - Top](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R15_Bottom.stl)
+ 
+ [RP15 Case STL - Bottom](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R15__Top.stl)
+ 
+ [R10 Case STL - Top](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R10_Case_Top.stl)
+ 
+ [R10 Case STL - Bottom](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R10_Case_bottom.stl)
+ 
 
 ## 📌 Pinout Connections
 
@@ -77,6 +81,27 @@ Note: When programming you have to connect USB C directly to the arduino, The US
 
 Download and install Arduino IDE.
 You can copy the code file itself, or copy and paste the code into IDE.  Some MCU's from china require you to select old bootloader, or power up while pressing the reset button. 
+
+# Use
+On Startup the Reader defaults to Read Mode.  To switch modes you will need to pre-program 4 cards or add your card UID to the code  by default it is:
+
+
+### 🏷️ RFID Mode UIDs and Proxmark3 Commands
+
+| Mode         | UID         | LF Command (T5577)             | HF Command (Magic 1K Card)                           |
+|--------------|-------------|--------------------------------|------------------------------------------------------|
+| Read Mode    | `0x1E6DC032` | `lf em 410xwrite 1E6DC032`     | `hf mf csetuid -u 1E6DC032`                          |
+| Door Mode    | `0x1E6D9861` | `lf em 410xwrite 1E6D9861`     | `hf mf csetuid -u 1E6D9861`                          |
+| Add Mode     | `0x1E6DFCA0` | `lf em 410xwrite 1E6DFCA0`     | `hf mf csetuid -u 1E6DFCA0`                          |
+| Remove Mode  | `0x1E6DE636` | `lf em 410xwrite 1E6DE636`     | `hf mf csetuid -u 1E6DE636`                          |
+
+Door Mode will send a Signal on Pin6 to activate a Door Relay when authorized cards are scanned.
+When Add Mode is selected, when a card is scanned it is added to the controller
+when Remove mode is selected if that card is scanned it is removed from the controller
+
+TODO: Scanning the remove mode card 3 times will reset all added cards (not mode cards)
+
+
  
 ## License
 
