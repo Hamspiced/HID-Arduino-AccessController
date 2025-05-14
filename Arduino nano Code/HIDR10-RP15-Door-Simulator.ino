@@ -172,7 +172,7 @@ void setup() {
   display.println("RFIDsim");
   display.setTextSize(1);
   display.setCursor(31, 40);
-  display.println("Version v1.0");
+  display.println("v1.0 By Hamspiced and Peekaboo");
   display.display();
   delay(1000);
 
