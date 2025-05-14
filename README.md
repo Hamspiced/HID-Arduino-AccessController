@@ -17,6 +17,8 @@ This is a project repository for creating a full fledged door access controller 
  
  HID R10 or R15 Multiclass Reader - Ebay or Marketplace Price Varies between 20-90$ Any reader should work that uses the Wiegand protocol
 
+Total Cost without Reader: $58.84/$14.34
+
 ## 3d Printed Cases
 
  I have the cases uploaded to Thingiverse but in case it goes down ill attach them to the repository.  Ive made 2 cases for the two different form factors of the Rp15 and 
