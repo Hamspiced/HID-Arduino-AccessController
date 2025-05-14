@@ -19,10 +19,10 @@ This is a project repository for creating a full fledged door access controller 
  I have the cases uploaded to Thingiverse but in case it goes down ill attach them to the repository.  Ive made 2 cases for the two different form factors of the Rp15 and 
  R10 Multiclass Se Readers 
  
- RP15 Case STL - Top
- RP15 Case STL - Bottom
- R10 Case STL - Top
- R10 Case STL - Bottom
+ [RP15 Case STL - Top](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R15_Bottom.stl)
+ [RP15 Case STL - Bottom](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R15__Top.stl)
+ [R10 Case STL - Top](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R10_Case_Top.stl)
+ [R10 Case STL - Bottom](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R10_Case_bottom.stl)
 
 ## 📌 Pinout Connections
 
