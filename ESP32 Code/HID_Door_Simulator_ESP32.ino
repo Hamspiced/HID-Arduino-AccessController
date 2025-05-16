@@ -18,7 +18,7 @@
 
 const char* ssid = "YourSSID";
 const char* password = "YourPassword";
-const char* ap_ssid = "ESP32-RFID";
+const char* ap_ssid = "Door-Simulator";
 const char* ap_password = "12345678";
 
 WebServer server(80);
