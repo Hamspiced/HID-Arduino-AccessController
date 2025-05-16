@@ -108,6 +108,52 @@ TODO: Scanning the remove mode card 3 times will reset all added cards (not mode
 
 
 
+# ESP32 Installation
+
+I use Arduino IDE for the ESP32.  I had to download the ESP32Little Fs plugin for Arduino IDE 2.x.   More information on it can be found from [earlephilhower's Github](https://github.com/earlephilhower/arduino-littlefs-upload) the TL;DR is: 
+
+Copy the VSIX file to ~/.arduinoIDE/plugins/ on Mac and Linux or C:\Users\<username>\.arduinoIDE\plugins\ on Windows (you may need to make this directory yourself beforehand).
+
+Once the plugin is in it's folder.  You can load the INO file into your sketch.  In the sketch folder, in the root create a directory called "data" and place the html file in there.  Then, Upload your code to your ESP32 (selecting the proper board and port).  When upload is complete: 
+
+On Windows: press [Ctrl] + [Shift] + [P], then "Upload LittleFS to Pico/ESP8266/ESP32".
+
+On macOS: press [⌘] + [Shift] + [P] to open the Command Palette in the Arduino IDE, then "Upload LittleFS to Pico/ESP8266/ESP32".
+
+It will upload the data folder with the web page interface.
+
+
+
+## Pinouts for ESP32 devices
+   
+   ### 📌 Xiao ESP32C3 Pin Mapping
+
+   | Function      | Physical Pin | Arduino Pin |
+   |---------------|--------------|-------------|
+   | Wiegand D0    | 2            | D2          |
+   | Wiegand D1    | 3            | D3          |
+   | Beeper        | 6            | D6          |
+   | Door Strike   | 7            | D7          |
+   | I2C SDA       | 4            | D4          |
+   | I2C SCL       | 5            | D5          |
+
+   ### 📌  ESP32 Pin Mapping
+
+   | Function      | GPIO         | Label          |
+   |---------------|--------------|----------------|
+   | Wiegand D0    | 16           | Wiegand D0 Pin |
+   | Wiegand D1    | 17           | Wiegand D1 Pin |
+   | Beeper        | 26           | Beeper Pin     |
+   | Door Strike   | 27           | Signal Pin     |
+   | I2C SDA       | 21           | SSD1306 OLED   |
+   | I2C SCL       | 22           | SSD1306 OLED   |
+
+
+ # Use
+
+ When booted up the esp32 will broadcast a Wifi Signal named: Door-Simulator.  Encryption Key is "12345678".  In the code you can also specify your own wifi network for it to connect to.  By default the default AP will host the webservice on: 192.168.4.1
+   
+
 ## 🙏 Acknowledgments
 
 Huge thanks to [Peekaboo](https://github.com/Peekaboo-ICU) for their invaluable support in helping bring this project to life.  
