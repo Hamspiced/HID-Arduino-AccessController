@@ -33,7 +33,7 @@ Total Cost without Reader: $58.84/$14.34
  [R10 Case STL - Bottom](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R10_Case_bottom.stl)
  
 
-## 📌 Pinout Connections
+## 📌 ARDUINO Pinout Connections
 
 ### 🔌 HID Reader to Arduino Uno
 
