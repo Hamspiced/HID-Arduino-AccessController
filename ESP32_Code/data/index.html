@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RFID Access Console</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #0b0c10;
+      color: #66fcf1;
+      font-family: 'Courier New', Courier, monospace;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #45a29e;
+    }
+    .info, .controls, .wifi, .mode-scan {
+      border: 1px solid #1f2833;
+      background: #1f2833;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+    }
+    button, input[type="text"], input[type="password"] {
+      background: #0b0c10;
+      border: 1px solid #66fcf1;
+      color: #66fcf1;
+      padding: 10px;
+      margin: 5px;
+      font-size: 14px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a29e;
+      color: #0b0c10;
+    }
+  </style>
+</head>
+<body>
+  <h1>ESP32 RFID Console</h1>
+
+  <div class="info">
+    <p><strong>Current Mode:</strong> <span id="mode">...</span></p>
+    <p><strong>Card Hex:</strong> <span id="card">...</span></p>
+    <p><strong>Facility Code:</strong> <span id="fc">...</span></p>
+    <p><strong>Card Number:</strong> <span id="id">...</span></p>
+  </div>
+
+  <div class="controls">
+    <h2>Controls</h2>
+    <button onclick="setMode(1)">READ MODE</button>
+    <button onclick="setMode(2)">DOOR MODE</button>
+    <button onclick="setMode(3)">ADD MODE</button>
+    <button onclick="setMode(4)">REMOVE MODE</button>
+    <button onclick="triggerDoor()">TRIGGER DOOR</button>
+  </div>
+
+  <div class="wifi">
+    <h2>Wi-Fi Setup</h2>
+    <form onsubmit="submitWiFi(event)">
+      <input type="text" id="ssid" placeholder="SSID" required>
+      <input type="password" id="pass" placeholder="Password" required>
+      <input type="text" id="ip" placeholder="Static IP (optional)">
+      <input type="text" id="gw" placeholder="Gateway (optional)">
+      <input type="text" id="subnet" placeholder="Subnet (optional)">
+      <button type="submit">Save Wi-Fi</button>
+    </form>
+  </div>
+
+  <div class="mode-scan">
+    <h2>Scan Mode Card</h2>
+    <form onsubmit="submitScan(event)">
+      <input type="text" id="cardid" placeholder="Card ID (hex)" required>
+      <button type="submit">Set Mode by Card</button>
+    </form>
+  </div>
+
+  <script>
+    function fetchStatus() {
+      fetch("/status")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("mode").textContent = data.mode;
+          document.getElementById("card").textContent = data.card;
+          document.getElementById("fc").textContent = data.fc;
+          document.getElementById("id").textContent = data.id;
+        });
+    }
+
+    function setMode(mode) {
+      fetch("/mode?m=" + mode);
+    }
+
+    function triggerDoor() {
+      fetch("/trigger");
+    }
+
+    function submitWiFi(event) {
+      event.preventDefault();
+      const ssid = document.getElementById("ssid").value;
+      const pass = document.getElementById("pass").value;
+      const ip = document.getElementById("ip").value;
+      const gw = document.getElementById("gw").value;
+      const subnet = document.getElementById("subnet").value;
+      const formData = new URLSearchParams();
+      formData.append("ssid", ssid);
+      formData.append("pass", pass);
+      if (ip) formData.append("ip", ip);
+      if (gw) formData.append("gw", gw);
+      if (subnet) formData.append("subnet", subnet);
+      fetch("/wifi", { method: "POST", body: formData })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          document.getElementById("ssid").value = "";
+          document.getElementById("pass").value = "";
+          document.getElementById("ip").value = "";
+          document.getElementById("gw").value = "";
+          document.getElementById("subnet").value = "";
+        });
+    }
+
+    function submitScan(event) {
+      event.preventDefault();
+      const cardid = document.getElementById("cardid").value.trim();
+      const hexRegex = /^[0-9a-fA-F]{6,10}$/;
+      if (!hexRegex.test(cardid)) {
+        alert("Please enter a valid hex card ID (6–10 characters).");
+        return;
+      }
+      fetch("/mode?scan=" + cardid)
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          document.getElementById("cardid").value = "";
+        })
+        .catch(err => alert("Failed to send card ID: " + err));
+    }
+
+    setInterval(fetchStatus, 1000);
+    fetchStatus();
+  </script>
+</body>
+</html>

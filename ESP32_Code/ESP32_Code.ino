@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
 #include <LittleFS.h>
@@ -16,9 +17,15 @@
 #define BEEPER_PIN     26
 #define SIGNAL_PIN     27
 
-const char* ssid = "YourSSID";
-const char* password = "YourPassword";
-const char* ap_ssid = "ESP32-RFID";
+// --- Wi-Fi and Static IP Configuration ---
+String userSSID = "YourSSID";
+String userPassword = "YourPassword";
+bool useHardcodedIP = false; // Set to true to use static IP below
+IPAddress hardcodedIP(192, 168, 1, 181);
+IPAddress hardcodedGW(192, 168, 1, 1);
+IPAddress hardcodedSN(255, 255, 255, 0);
+
+const char* ap_ssid = "RFID-Door-Sim";
 const char* ap_password = "12345678";
 
 WebServer server(80);
@@ -43,8 +50,16 @@ uint8_t lastBitLength = 0;
 uint8_t lastFacilityCode = 0;
 uint16_t lastCardNumber = 0;
 
+#define MODE_CARD_READ   0x1E6DC032
+#define MODE_CARD_DOOR   0x1E6D9861
+#define MODE_CARD_ADD    0x1E6DFCA0
+#define MODE_CARD_REMOVE 0x1E6DE636
+
 const unsigned long configCards[4] = {
-  0x1E6DC032, 0x1E6D9861, 0x1E6DFCA0, 0x1E6DE636
+  MODE_CARD_READ,
+  MODE_CARD_DOOR,
+  MODE_CARD_ADD,
+  MODE_CARD_REMOVE
 };
 
 unsigned long parseCard(String line) {
@@ -134,8 +149,16 @@ void handleSetMode() {
     if (mode >= MODE_READ && mode <= MODE_REMOVE) {
       currentMode = mode;
     }
+  } else if (server.hasArg("scan")) {
+    unsigned long scannedCard = strtoul(server.arg("scan").c_str(), NULL, 16);
+    for (uint8_t i = 0; i < 4; i++) {
+      if (scannedCard == configCards[i]) {
+        currentMode = i + 1;
+        break;
+      }
+    }
   }
-  server.send(200, "text/plain", "OK");
+  server.send(200, "text/plain", "Mode Set");
 }
 
 void handleTriggerDoor() {
@@ -150,14 +173,69 @@ void setupWebServer() {
   server.on("/status", handleStatus);
   server.on("/mode", handleSetMode);
   server.on("/trigger", handleTriggerDoor);
-  server.begin();
+  server.on("/wifi", HTTP_POST, []() {
+    if (server.hasArg("ssid") && server.hasArg("pass")) {
+      String newSSID = server.arg("ssid");
+      String newPASS = server.arg("pass");
+      String newIP = server.hasArg("ip") ? server.arg("ip") : "";
+      String newGW = server.hasArg("gw") ? server.arg("gw") : "";
+      String newSN = server.hasArg("subnet") ? server.arg("subnet") : "";
+
+      File config = LittleFS.open("/wifi.txt", "w");
+      config.println(newSSID);
+      config.println(newPASS);
+      config.println(newIP);
+      config.println(newGW);
+      config.println(newSN);
+      config.close();
+
+      server.send(200, "text/plain", "Wi-Fi settings saved. Please reboot.");
+    } else {
+      server.send(400, "text/plain", "Missing SSID or Password");
+    }
+  });
 }
 
 void connectWiFi() {
   WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(ssid, password);
-  WiFi.softAP(ap_ssid, ap_password);
-  delay(500);
+  String ssidVal = userSSID;
+  String passVal = userPassword;
+  IPAddress local_IP, gateway, subnet;
+
+  if (useHardcodedIP) {
+    WiFi.config(hardcodedIP, hardcodedGW, hardcodedSN);
+  } else if (LittleFS.exists("/wifi.txt")) {
+    File f = LittleFS.open("/wifi.txt", "r");
+    ssidVal = f.readStringUntil('\n');
+    passVal = f.readStringUntil('\n');
+    String ip = f.readStringUntil('\n');
+    String gw = f.readStringUntil('\n');
+    String sn = f.readStringUntil('\n');
+    ssidVal.trim(); passVal.trim();
+    ip.trim(); gw.trim(); sn.trim();
+    f.close();
+
+    if (ip.length() && gw.length() && sn.length()) {
+      if (local_IP.fromString(ip) && gateway.fromString(gw) && subnet.fromString(sn)) {
+        WiFi.config(local_IP, gateway, subnet);
+      }
+    }
+  }
+
+  WiFi.begin(ssidVal.c_str(), passVal.c_str());
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
+    delay(100);
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Connected to WiFi");
+    Serial.println(WiFi.localIP());
+  } else {
+    WiFi.softAP(ap_ssid, ap_password);
+    Serial.println("Started Access Point");
+    Serial.println(WiFi.softAPIP());
+  }
 }
 
 void setup() {
@@ -203,6 +281,24 @@ void loop() {
     delay(50);
     digitalWrite(BEEPER_PIN, HIGH);
 
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setCursor(0, 0);
+    display.print("Mode: ");
+    display.println(modeName(currentMode));
+
+    display.setCursor(0, 12);
+    display.print("Card: 0x");
+    display.println(lastCardData, HEX);
+
+    display.setCursor(0, 24);
+    display.print("Facility: ");
+    display.println(lastFacilityCode);
+
+    display.setCursor(0, 36);
+    display.print("ID: ");
+    display.println(lastCardNumber);
+
     switch (currentMode) {
       case MODE_READ:
         Serial.printf("Card: 0x%08lX\n", lastCardData);
@@ -221,5 +317,7 @@ void loop() {
         removeCard(lastCardData);
         break;
     }
+
+    display.display();
   }
 }
