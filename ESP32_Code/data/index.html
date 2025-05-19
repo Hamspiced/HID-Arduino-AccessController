@@ -142,5 +142,32 @@
     setInterval(fetchStatus, 1000);
     fetchStatus();
   </script>
+
+<div class="log">
+  <h2>Scan Log</h2>
+  <button onclick="loadLog()">Refresh Log</button>
+  <button onclick="clearLog()">Clear Log</button>
+  <pre id="logOutput">Loading log...</pre>
+</div>
+
+<script>
+  function loadLog() {
+    fetch("/log")
+      .then(r => r.text())
+      .then(data => document.getElementById("logOutput").textContent = data)
+      .catch(e => document.getElementById("logOutput").textContent = "Error loading log.");
+  }
+
+  function clearLog() {
+    fetch("/clearlog", { method: "POST" })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        loadLog(); // reload log view after clearing
+      })
+      .catch(err => alert("Failed to clear log: " + err));
+  }
+</script>
+
 </body>
 </html>

@@ -18,9 +18,9 @@
 #define SIGNAL_PIN     27
 
 // --- Wi-Fi and Static IP Configuration ---
-String userSSID = "YourSSID";
-String userPassword = "YourPassword";
-bool useHardcodedIP = false; // Set to true to use static IP below
+String userSSID = "NoodleDoodle";
+String userPassword = "iamroach";
+bool useHardcodedIP = true; // Set to true to use static IP below
 IPAddress hardcodedIP(192, 168, 1, 181);
 IPAddress hardcodedGW(192, 168, 1, 1);
 IPAddress hardcodedSN(255, 255, 255, 0);
@@ -133,11 +133,20 @@ String getCardJSON() {
   return json;
 }
 
+
+//void handleRoot() {
+//  server.send(200, "text/plain", "Hello from ESP32");
+//}
 void handleRoot() {
   File file = LittleFS.open("/index.html", "r");
+  if (!file) {
+    server.send(500, "text/plain", "index.html missing");
+    return;
+  }
   server.streamFile(file, "text/html");
   file.close();
 }
+
 
 void handleStatus() {
   server.send(200, "application/json", getCardJSON());
@@ -173,6 +182,12 @@ void setupWebServer() {
   server.on("/status", handleStatus);
   server.on("/mode", handleSetMode);
   server.on("/trigger", handleTriggerDoor);
+  server.on("/log", handleLogFile);
+  server.on("/clearlog", HTTP_POST, []() {
+    File log = LittleFS.open("/scanlog.txt", "w");  // Opening in write mode truncates the file
+    if (log) log.close();
+    server.send(200, "text/plain", "Log cleared.");
+  });
   server.on("/wifi", HTTP_POST, []() {
     if (server.hasArg("ssid") && server.hasArg("pass")) {
       String newSSID = server.arg("ssid");
@@ -194,6 +209,9 @@ void setupWebServer() {
       server.send(400, "text/plain", "Missing SSID or Password");
     }
   });
+
+  // ✅ Start the web server AFTER all routes are defined
+  server.begin();
 }
 
 void connectWiFi() {
@@ -239,19 +257,35 @@ void connectWiFi() {
 }
 
 void setup() {
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.softAP(ap_ssid, ap_password);
+  Serial.begin(115200);
+  Serial.println("STA IP: " + WiFi.localIP().toString());
+  Serial.println("AP IP: " + WiFi.softAPIP().toString());
+
   Serial.begin(115200);
   if (!LittleFS.begin()) {
     Serial.println("LittleFS mount failed");
     return;
   }
-
+  if (LittleFS.exists("/index.html")) {
+  Serial.println("index.html found on LittleFS.");
+    } else {
+    Serial.println("index.html MISSING on LittleFS.");
+    }
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(2);
-  display.setCursor(20, 20);
-  display.println("RFIDsim");
+  display.setCursor(18, 0);
+  display.println("READ MODE");
+  display.setTextSize(1); 
+  display.setCursor(0, 20);
+  display.println("Scan Card to Begin...");
   display.display();
+
+    String cardType = (wg.getWiegandType() == 26) ? "Wiegand26" : "Unknown";
+    appendLogEntry(lastCardData, lastFacilityCode, lastCardNumber, cardType);
   delay(1000);
 
   pinMode(BEEPER_PIN, OUTPUT);
@@ -262,8 +296,9 @@ void setup() {
   wg.begin(WIEGAND_D0_PIN, WIEGAND_D1_PIN);
   loadAuthorizedCards();
   connectWiFi();
+  configTime(0, 0, "pool.ntp.org");
   setupWebServer();
-}
+  }
 
 void loop() {
   server.handleClient();
@@ -282,20 +317,20 @@ void loop() {
     digitalWrite(BEEPER_PIN, HIGH);
 
     display.clearDisplay();
-    display.setTextSize(1);
+    display.setTextSize(2);
     display.setCursor(0, 0);
-    display.print("Mode: ");
     display.println(modeName(currentMode));
 
-    display.setCursor(0, 12);
+    display.setTextSize(1);
+    display.setCursor(0, 20);
     display.print("Card: 0x");
     display.println(lastCardData, HEX);
 
-    display.setCursor(0, 24);
+    display.setCursor(0, 30);
     display.print("Facility: ");
     display.println(lastFacilityCode);
 
-    display.setCursor(0, 36);
+    display.setCursor(0, 40);
     display.print("ID: ");
     display.println(lastCardNumber);
 
@@ -319,5 +354,40 @@ void loop() {
     }
 
     display.display();
+
+    String cardType = (wg.getWiegandType() == 26) ? "Wiegand26" : "Unknown";
+    appendLogEntry(lastCardData, lastFacilityCode, lastCardNumber, cardType);
   }
+}
+
+const char* logFile = "/scanlog.txt";
+
+String getTimestamp() {
+  time_t now = time(nullptr);
+  struct tm* t = localtime(&now);
+  char buf[64];
+  snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
+           t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+           t->tm_hour, t->tm_min, t->tm_sec);
+  return String(buf);
+}
+
+void appendLogEntry(unsigned long raw, uint8_t fc, uint16_t id, String type) {
+  File log = LittleFS.open(logFile, "a");
+  if (log) {
+    log.printf("%s | RAW: %lu | FC: %u | ID: %u | TYPE: %s\n",
+               getTimestamp().c_str(), raw, fc, id, type.c_str());
+    log.close();
+  }
+}
+
+void handleLogFile() {
+  File log = LittleFS.open(logFile, "r");
+  if (!log) {
+    server.send(200, "text/plain", "Log file not found.");
+    return;
+  }
+
+  server.streamFile(log, "text/plain");
+  log.close();
 }
