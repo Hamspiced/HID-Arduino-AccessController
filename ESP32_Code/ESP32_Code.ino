@@ -18,9 +18,11 @@
 #define SIGNAL_PIN     27
 
 // --- Wi-Fi and Static IP Configuration ---
-String userSSID = "NoodleDoodle";
+//Input your wireless SSID Below
+String userSSID = "YourSSID";
+//Input your WIFI Password Below
 String userPassword = "iamroach";
-bool useHardcodedIP = true; // Set to true to use static IP below
+bool useHardcodedIP = False; // Set to true to use static IP below
 IPAddress hardcodedIP(192, 168, 1, 181);
 IPAddress hardcodedGW(192, 168, 1, 1);
 IPAddress hardcodedSN(255, 255, 255, 0);
@@ -121,7 +123,7 @@ String modeName(uint8_t mode) {
     case MODE_READ: return "READ MODE";
     case MODE_DOOR: return "DOOR MODE";
     case MODE_ADD: return "ADD MODE";
-    case MODE_REMOVE: return "REMOVE MODE";
+    case MODE_REMOVE: return "DEL MODE";
     default: return "UNKNOWN";
   }
 }
