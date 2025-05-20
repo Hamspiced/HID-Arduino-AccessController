@@ -37,6 +37,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define MAX_CARDS 20
 #define CARD_SIZE sizeof(unsigned long)
 const char* cardsFile = "/cards.txt";
+const char* logFile = "/scanlog.txt";
 
 unsigned long authorizedCards[MAX_CARDS];
 uint8_t cardCount = 0;
@@ -195,6 +196,80 @@ void handleTriggerDoor() {
   server.send(200, "text/plain", "Triggered");
 }
 
+// --- REST API Endpoints ---
+
+void handleApiStatus() {
+  server.send(200, "application/json", getCardJSON());
+}
+
+void handleApiCardsGet() {
+  String json = "[";
+  for (uint8_t i = 0; i < cardCount; i++) {
+    json += String(authorizedCards[i]);
+    if (i < cardCount - 1) json += ",";
+  }
+  json += "]";
+  server.send(200, "application/json", json);
+}
+
+void handleApiCardsPost() {
+  if (!server.hasArg("card")) {
+    server.send(400, "application/json", "{\"error\":\"Missing card\"}");
+    return;
+  }
+  unsigned long cardData = strtoul(server.arg("card").c_str(), NULL, 10);
+  addCard(cardData);
+  server.send(200, "application/json", "{\"success\":true}");
+}
+
+void handleApiCardsDelete() {
+  if (!server.hasArg("card")) {
+    server.send(400, "application/json", "{\"error\":\"Missing card\"}");
+    return;
+  }
+  unsigned long cardData = strtoul(server.arg("card").c_str(), NULL, 10);
+  removeCard(cardData);
+  server.send(200, "application/json", "{\"success\":true}");
+}
+
+void handleApiTrigger() {
+  digitalWrite(SIGNAL_PIN, HIGH);
+  delay(5000);
+  digitalWrite(SIGNAL_PIN, LOW);
+  server.send(200, "application/json", "{\"success\":true}");
+}
+
+void handleApiModePost() {
+  if (!server.hasArg("mode")) {
+    server.send(400, "application/json", "{\"error\":\"Missing mode\"}");
+    return;
+  }
+  uint8_t mode = server.arg("mode").toInt();
+  if (mode >= MODE_READ && mode <= MODE_REMOVE) {
+    currentMode = mode;
+    displayScanPrompt();
+    server.send(200, "application/json", "{\"success\":true}");
+  } else {
+    server.send(400, "application/json", "{\"error\":\"Invalid mode\"}");
+  }
+}
+
+void handleApiLogGet() {
+  File log = LittleFS.open(logFile, "r");
+  if (!log) {
+    server.send(200, "application/json", "{\"error\":\"Log file not found.\"}");
+    return;
+  }
+  String logData;
+  while (log.available()) {
+    logData += log.readStringUntil('\n') + "\\n";
+  }
+  log.close();
+  server.send(200, "text/plain", logData);
+}
+
+// --- Webserver ---
+
 void setupWebServer() {
   server.on("/", handleRoot);
   server.on("/status", handleStatus);
@@ -222,6 +297,22 @@ void setupWebServer() {
       server.send(400, "text/plain", "Missing SSID or Password");
     }
   });
+
+// --- REST API Endpoints ---
+server.on("/api/status", HTTP_GET, handleApiStatus);
+server.on("/api/cards", HTTP_GET, handleApiCardsGet);
+server.on("/api/cards", HTTP_POST, handleApiCardsPost);
+server.on("/api/cards", HTTP_DELETE, handleApiCardsDelete);
+server.on("/api/trigger", HTTP_POST, handleApiTrigger);
+server.on("/api/mode", HTTP_POST, handleApiModePost);
+server.on("/api/log", HTTP_GET, handleApiLogGet);
+
+//	•	Get status: GET http://esp32.local/api/status
+//	•	Add card: POST http://esp32.local/api/cards with body card=123456
+//	•	Remove card: DELETE http://esp32.local/api/cards?card=123456
+//	•	Trigger door: POST http://esp32.local/api/trigger
+//	•	Set mode: POST http://esp32.local/api/mode with body mode=1
+//	•	Get log: GET http://esp32.local/api/log
 
   // ✅ Start the web server AFTER all routes are defined
   server.begin();
@@ -380,14 +471,33 @@ void loop() {
     switch (currentMode) {
       case MODE_READ:
         Serial.printf("Card: 0x%08lX\n", lastCardData);
+        // No change to display or logging in READ mode
         break;
-      case MODE_DOOR:
-        if (isAuthorized(lastCardData)) {
+
+      case MODE_DOOR: {
+        // Check authorization and display result
+        bool authorized = isAuthorized(lastCardData);
+
+        display.setTextSize(2);
+        display.setCursor(0, 54); // Lower part of OLED
+        if (authorized) {
+          display.println("AUTHORIZED");
           digitalWrite(SIGNAL_PIN, HIGH);
           delay(5000);
           digitalWrite(SIGNAL_PIN, LOW);
+        } else {
+          display.println("NOT AUTHORIZED");
+          // Door is not triggered
         }
+        display.display();
+
+        // Log every scan in DOOR MODE (authorized or not)
+        String cardType = (wg.getWiegandType() == 26) ? "Wiegand26" : "Unknown";
+        appendLogEntry(lastCardData, lastFacilityCode, lastCardNumber, cardType);
+
         break;
+      }
+
       case MODE_ADD:
         addCard(lastCardData);
         break;
@@ -396,14 +506,18 @@ void loop() {
         break;
     }
 
-    display.display();
+    // In READ mode and others, keep your existing display logic
+    if (currentMode != MODE_DOOR) {
+      display.display();
+    }
 
-    String cardType = (wg.getWiegandType() == 26) ? "Wiegand26" : "Unknown";
-    appendLogEntry(lastCardData, lastFacilityCode, lastCardNumber, cardType);
+    // Log card in modes other than DOOR if needed (existing logic)
+    if (currentMode != MODE_DOOR) {
+      String cardType = (wg.getWiegandType() == 26) ? "Wiegand26" : "Unknown";
+      appendLogEntry(lastCardData, lastFacilityCode, lastCardNumber, cardType);
+    }
   }
 }
-
-const char* logFile = "/scanlog.txt";
 
 String getTimestamp() {
   time_t now = time(nullptr);
