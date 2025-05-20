@@ -18,9 +18,11 @@
 #define SIGNAL_PIN     27
 
 // --- Wi-Fi and Static IP Configuration ---
-String userSSID = "NoodleDoodle";
-String userPassword = "iamroach";
-bool useHardcodedIP = true; // Set to true to use static IP below
+//Put your SSID in here Below
+String userSSID = "YourSSID";
+//Put your Password for your SSID below
+String userPassword = "YourPassword";
+bool useHardcodedIP = false; // Set to true to use static IP below
 IPAddress hardcodedIP(192, 168, 1, 181);
 IPAddress hardcodedGW(192, 168, 1, 1);
 IPAddress hardcodedSN(255, 255, 255, 0);
