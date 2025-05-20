@@ -123,6 +123,16 @@ On macOS: press [⌘] + [Shift] + [P] to open the Command Palette in the Arduino
 It will upload the data folder with the web page interface.
 
 
+  ## ESP32 Usage
+
+The ESP32 adds a Web Interface to the RFID Reader.  It will allow you to access a webpage (192.168.4.1 when in Access Point Mode) that will allow you to add Admin Cards, Trigger the door sensor, and display a card log.  
+
+  ##REST Api
+
+  There are Endpoints for the REST API already added to the code.  The Endpoint webhooks are within the code.  I dont use Home Assistant but if you are savvy you should be able to use this with home assistant.
+    
+
+
 
 ## Pinouts for ESP32 devices
    
