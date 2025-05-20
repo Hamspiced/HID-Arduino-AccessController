@@ -15,7 +15,7 @@
     h1 {
       color: #45a29e;
     }
-    .info, .controls, .wifi, .mode-scan {
+    .info, .controls, .wifi, .mode-scan, .log {
       border: 1px solid #1f2833;
       background: #1f2833;
       padding: 15px;
@@ -70,11 +70,18 @@
   </div>
 
   <div class="mode-scan">
-    <h2>Scan Mode Card</h2>
-    <form onsubmit="submitScan(event)">
-      <input type="text" id="cardid" placeholder="Card ID (hex)" required>
-      <button type="submit">Set Mode by Card</button>
+    <h2>Add Admin Card</h2>
+    <form onsubmit="submitAdmin(event)">
+      <input type="text" id="adminid" placeholder="Card ID (decimal)" required>
+      <button type="submit">Add Admin Card</button>
     </form>
+  </div>
+
+  <div class="log">
+    <h2>Scan Log</h2>
+    <button onclick="loadLog()">Refresh Log</button>
+    <button onclick="clearLog()">Clear Log</button>
+    <pre id="logOutput">Loading log...</pre>
   </div>
 
   <script>
@@ -114,60 +121,43 @@
         .then(res => res.text())
         .then(msg => {
           alert(msg);
-          document.getElementById("ssid").value = "";
-          document.getElementById("pass").value = "";
-          document.getElementById("ip").value = "";
-          document.getElementById("gw").value = "";
-          document.getElementById("subnet").value = "";
         });
     }
 
-    function submitScan(event) {
+    function submitAdmin(event) {
       event.preventDefault();
-      const cardid = document.getElementById("cardid").value.trim();
-      const hexRegex = /^[0-9a-fA-F]{6,10}$/;
-      if (!hexRegex.test(cardid)) {
-        alert("Please enter a valid hex card ID (6–10 characters).");
+      const adminid = document.getElementById("adminid").value.trim();
+      if (!/^[0-9]{6,10}$/.test(adminid)) {
+        alert("Enter a valid decimal Card ID.");
         return;
       }
-      fetch("/mode?scan=" + cardid)
+      fetch("/mode?admin=" + adminid)
         .then(res => res.text())
         .then(msg => {
           alert(msg);
-          document.getElementById("cardid").value = "";
-        })
-        .catch(err => alert("Failed to send card ID: " + err));
+          document.getElementById("adminid").value = "";
+        });
+    }
+
+    function loadLog() {
+      fetch("/log")
+        .then(r => r.text())
+        .then(data => document.getElementById("logOutput").textContent = data)
+        .catch(e => document.getElementById("logOutput").textContent = "Error loading log.");
+    }
+
+    function clearLog() {
+      fetch("/clearlog", { method: "POST" })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          loadLog();
+        });
     }
 
     setInterval(fetchStatus, 1000);
     fetchStatus();
+    loadLog();
   </script>
-
-<div class="log">
-  <h2>Scan Log</h2>
-  <button onclick="loadLog()">Refresh Log</button>
-  <button onclick="clearLog()">Clear Log</button>
-  <pre id="logOutput">Loading log...</pre>
-</div>
-
-<script>
-  function loadLog() {
-    fetch("/log")
-      .then(r => r.text())
-      .then(data => document.getElementById("logOutput").textContent = data)
-      .catch(e => document.getElementById("logOutput").textContent = "Error loading log.");
-  }
-
-  function clearLog() {
-    fetch("/clearlog", { method: "POST" })
-      .then(res => res.text())
-      .then(msg => {
-        alert(msg);
-        loadLog(); // reload log view after clearing
-      })
-      .catch(err => alert("Failed to clear log: " + err));
-  }
-</script>
-
 </body>
 </html>

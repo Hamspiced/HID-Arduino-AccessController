@@ -28,6 +28,8 @@ IPAddress hardcodedSN(255, 255, 255, 0);
 const char* ap_ssid = "RFID-Door-Sim";
 const char* ap_password = "12345678";
 
+const unsigned long ADMIN_UID = 562141196;
+
 WebServer server(80);
 WIEGAND wg;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -133,10 +135,6 @@ String getCardJSON() {
   return json;
 }
 
-
-//void handleRoot() {
-//  server.send(200, "text/plain", "Hello from ESP32");
-//}
 void handleRoot() {
   File file = LittleFS.open("/index.html", "r");
   if (!file) {
@@ -147,12 +145,31 @@ void handleRoot() {
   file.close();
 }
 
-
 void handleStatus() {
   server.send(200, "application/json", getCardJSON());
 }
 
 void handleSetMode() {
+  if (server.hasArg("admin")) {
+    unsigned long adminCard = strtoul(server.arg("admin").c_str(), NULL, 10);
+    if (adminCard == ADMIN_UID) {
+      currentMode++;
+      if (currentMode > MODE_REMOVE) currentMode = MODE_READ;
+      server.send(200, "text/plain", "Admin card cycled mode.");
+      return;
+    } else {
+      File f = LittleFS.open("/admin.txt", "w");
+       if (f) {
+       f.println(String(adminCard));
+       f.close();
+       server.send(200, "text/plain", "Admin card saved.");
+       } else {
+       server.send(500, "text/plain", "Failed to save admin card.");
+       }
+      return;
+    }
+  }
+  
   if (server.hasArg("m")) {
     uint8_t mode = server.arg("m").toInt();
     if (mode >= MODE_READ && mode <= MODE_REMOVE) {
@@ -167,6 +184,7 @@ void handleSetMode() {
       }
     }
   }
+  displayScanPrompt();  // ✅ Add this line here to update OLED
   server.send(200, "text/plain", "Mode Set");
 }
 
@@ -183,11 +201,6 @@ void setupWebServer() {
   server.on("/mode", handleSetMode);
   server.on("/trigger", handleTriggerDoor);
   server.on("/log", handleLogFile);
-  server.on("/clearlog", HTTP_POST, []() {
-    File log = LittleFS.open("/scanlog.txt", "w");  // Opening in write mode truncates the file
-    if (log) log.close();
-    server.send(200, "text/plain", "Log cleared.");
-  });
   server.on("/wifi", HTTP_POST, []() {
     if (server.hasArg("ssid") && server.hasArg("pass")) {
       String newSSID = server.arg("ssid");
@@ -256,6 +269,29 @@ void connectWiFi() {
   }
 }
 
+unsigned long loadAdminUID() {
+  if (LittleFS.exists("/admin.txt")) {
+    File f = LittleFS.open("/admin.txt", "r");
+    if (f) {
+      String line = f.readStringUntil('\n');
+      f.close();
+      return strtoul(line.c_str(), NULL, 10);
+    }
+  }
+  return 0;
+}
+
+void displayScanPrompt() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setCursor(0, 0);
+  display.println(modeName(currentMode));
+  display.setTextSize(1);
+  display.setCursor(0, 20);
+  display.println("Scan Card to Begin...");
+  display.display();
+}
+
 void setup() {
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(ap_ssid, ap_password);
@@ -263,7 +299,6 @@ void setup() {
   Serial.println("STA IP: " + WiFi.localIP().toString());
   Serial.println("AP IP: " + WiFi.softAPIP().toString());
 
-  Serial.begin(115200);
   if (!LittleFS.begin()) {
     Serial.println("LittleFS mount failed");
     return;
@@ -304,7 +339,15 @@ void loop() {
   server.handleClient();
 
   if (wg.available()) {
-    lastCardData = wg.getCode();
+    unsigned long cardData = wg.getCode();
+    unsigned long adminUID = loadAdminUID();
+    if (cardData == adminUID) {
+      currentMode++;
+      if (currentMode > MODE_REMOVE) currentMode = MODE_READ;
+      displayScanPrompt();
+      return;
+    }
+    lastCardData = cardData;
     lastBitLength = 0;
     unsigned long data = lastCardData;
     while (data) { lastBitLength++; data >>= 1; }
