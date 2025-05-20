@@ -1,5 +1,9 @@
 # HID-Arduino-AccessController
-This is a project repository for creating a full fledged door access controller using an HID Reader, Arduino, and i2c screen.  This project will allow you to use the reader as a simple badge scanner, act as a door controller, identify authorized access control cards, add cards, and delete cards.
+This is a project repository for creating a full fledged door access controller using an HID Reader, Arduino, and i2c screen.  
+
+The Arduino portion of this project will allow you to use the reader as a simple badge scanner, act as a door controller, identify authorized access control cards, add cards, and delete cards.
+
+The ESP32 Portion of this project will do all of the same as well as connect to your wifi or host an AP that can be connected do.  Through the Web Server you can add an Admin card, trigger the door signal, add cards, remove cards, as well as see a log of all scanned cards.
 
 ![R15 Door Simulator](https://github.com/Hamspiced/HID-Arduino-AccessController/raw/main/Images/R15%20Door%20Simulator2.jpeg)
 
