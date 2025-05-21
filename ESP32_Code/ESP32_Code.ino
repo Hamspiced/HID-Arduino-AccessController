@@ -19,11 +19,11 @@
 
 // --- Wi-Fi and Static IP Configuration ---
 //Put your SSID in here Below
-String userSSID = "NoodleDoodle";
+String userSSID = "YourSSID";
 //Put your Password for your SSID below
-String userPassword = "iamroach";
+String userPassword = "YourWifiAddress";
 bool useHardcodedIP = true; // Set to true to use static IP below
-IPAddress hardcodedIP(192, 168, 1, 181);
+IPAddress hardcodedIP(192, 168, 1, 100);
 IPAddress hardcodedGW(192, 168, 1, 1);
 IPAddress hardcodedSN(255, 255, 255, 0);
 
