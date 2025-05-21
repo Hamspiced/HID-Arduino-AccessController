@@ -19,10 +19,10 @@
 
 // --- Wi-Fi and Static IP Configuration ---
 //Put your SSID in here Below
-String userSSID = "YourSSID";
+String userSSID = "NoodleDoodle";
 //Put your Password for your SSID below
-String userPassword = "YourPassword";
-bool useHardcodedIP = false; // Set to true to use static IP below
+String userPassword = "iamroach";
+bool useHardcodedIP = true; // Set to true to use static IP below
 IPAddress hardcodedIP(192, 168, 1, 181);
 IPAddress hardcodedGW(192, 168, 1, 1);
 IPAddress hardcodedSN(255, 255, 255, 0);
@@ -481,14 +481,14 @@ void loop() {
         bool authorized = isAuthorized(lastCardData);
 
         display.setTextSize(2);
-        display.setCursor(0, 54); // Lower part of OLED
+        display.setCursor(0, 50); // Lower part of OLED
         if (authorized) {
           display.println("AUTHORIZED");
           digitalWrite(SIGNAL_PIN, HIGH);
           delay(5000);
           digitalWrite(SIGNAL_PIN, LOW);
         } else {
-          display.println("NOT AUTHORIZED");
+          display.println("NO ENTRY");
           // Door is not triggered
         }
         display.display();

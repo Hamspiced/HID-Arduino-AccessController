@@ -1,0 +1,31 @@
+# RFID Door Mode sensor
+sensor:
+  - platform: rest
+    name: RFID Door Mode
+    resource: http://[YOUR_ESP32_IP]/status
+    value_template: "{{ value_json.mode }}"
+    json_attributes:
+      - card
+      - fc
+      - id
+    scan_interval: 2
+
+  - platform: rest
+    name: RFID Last Card
+    resource: http://[YOUR_ESP32_IP]/status
+    value_template: "{{ value_json.card }}"
+    scan_interval: 2
+
+# Command to trigger the door
+rest_command:
+  trigger_rfid_door:
+    url: "http://[YOUR_ESP32_IP]/trigger"
+    method: POST
+
+  set_rfid_mode:
+    url: "http://[YOUR_ESP32_IP]/mode?m={{ mode }}"
+    method: GET
+    
+  cycle_rfid_mode:
+    url: "http://[YOUR_ESP32_IP]/mode?admin=562141196"
+    method: POST
