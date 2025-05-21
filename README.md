@@ -166,7 +166,77 @@ The ESP32 adds a Web Interface to the RFID Reader.  It will allow you to access 
  # Use
 
  When booted up the esp32 will broadcast a Wifi Signal named: Door-Simulator.  Encryption Key is "12345678".  In the code you can also specify your own wifi network for it to connect to.  By default the default AP will host the webservice on: 192.168.4.1
-   
+
+
+
+# Home Assistant Integration Guide
+
+## 1. Install a Text Editor Add-on
+
+- Install a **Text Editor Add-on** or **Studio Code Server Add-on** from the Home Assistant Add-on Store.
+
+## 2. Edit Configuration
+
+- Open your `configuration.yaml` file with your preferred editor.
+- Paste the contents of **RFIDHomeAssistant.yaml** at the **end** of your `configuration.yaml`.
+- **Important:** Change `"YourDeviceIPaddress"` to the static IP assigned to your door reader.
+
+## 3. Check and Restart
+
+- Go to **Developer Tools** → **YAML** → **Check Configuration**.
+- If the configuration is valid, press **Restart**. (You may need to confirm a few times.)
+
+## 4. Verify Entities
+
+After restart, go to:
+
+    Settings > Devices & Services > Entities
+
+Search for:
+
+- `sensor.rfid_door_mode`
+- `sensor.rfid_last_card`
+
+These entities will show the current mode and the last card scanned.
+
+---
+
+## 5. Trigger Door
+
+- Go to **Developer Tools** → **Services**.
+- Search for `rest_command.trigger_rfid_door` and click **Call Service** to test.
+
+---
+
+## 6. Change Mode
+
+- Use `rest_command.set_rfid_mode` with a data payload to set the desired mode.
+
+---
+
+## Add the New Entities to Your Dashboard
+
+1. Go to your dashboard.
+2. Click the three dots (⋮) in the upper right and choose **Take Control**.
+3. Click **Add Card** in the lower right.
+4. Choose **By Entity**.
+5. Select the RFID entities and hit **Continue**.
+
+---
+
+## Add a Mode Button
+
+You can also add a button to display and control the reader mode:
+
+```yaml
+type: button
+entity: sensor.rfid_door_mode
+name: RFID Mode
+show_state: true
+tap_action:
+  action: call-service
+  service: rest_command.cycle_rfid_mode
+```   
 
 ## 🙏 Acknowledgments
 
