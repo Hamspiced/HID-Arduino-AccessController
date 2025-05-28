@@ -26,8 +26,10 @@ Total Cost without Reader: $58.84/$14.34
 Optional (if you want to add a Relay and Door Striker/Mag Lock
 
  [DC 5v Relay Module 1 Channel](https://a.co/d/gpslT7C) - 12.99 per $10 or $1.29 ea
+ 
  [USB-C PD Trigger Board](https://a.co/d/3NxkBei) $9.98 for 4 or $2.50 ea
-[12v Door Strike](https://a.co/d/8t9gDx0) $64.19 each
+ 
+ [12v Door Strike](https://a.co/d/8t9gDx0) $64.19 each
 
 ## 3d Printed Cases
 
