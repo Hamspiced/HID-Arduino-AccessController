@@ -23,6 +23,14 @@ The ESP32 Portion of this project will do all of the same as well as connect to 
 
 Total Cost without Reader: $58.84/$14.34
 
+Optional (if you want to add a Relay and Door Striker/Mag Lock
+
+ [DC 5v Relay Module 1 Channel](https://a.co/d/gpslT7C) - 12.99 per $10 or $1.29 ea
+ 
+ [USB-C PD Trigger Board](https://a.co/d/3NxkBei) $9.98 for 4 or $2.50 ea
+ 
+ [12v Door Strike](https://a.co/d/8t9gDx0) $64.19 each
+
 ## 3d Printed Cases
 
  I have the cases uploaded to Thingiverse but in case it goes down ill attach them to the repository.  Ive made 2 cases for the two different form factors of the Rp15 and 
@@ -85,6 +93,16 @@ Total Cost without Reader: $58.84/$14.34
  You can use Heatset inserts or just screws to attach to the bottom of the case.
 
 Note: When programming you have to connect USB C directly to the arduino, The USB-C Pigtail is power only it wont pass data through so you cant update your Arduino with this connection.  Likewise you cannot power the reader directly by the Arduino power, it isnt poweful enough for that.
+
+## Assembly of Relay + Door Strike.
+Run Wire from Arduino Pin 7 or ESP32 Pin 27 to Relay IN 
+Run 12v+ from USB-C PD to Door Strike
+Run 12v- from USB-C PD to Relay Com.
+Run Wire from NO (Normall Open) on Relay to Doorstrike.
+Run 5v+ From Step Down to DC+ on relay
+Run 5v- from Step Down to DC- on relay
+
+
 
 # Flashing Arduino via Arduino IDE
 

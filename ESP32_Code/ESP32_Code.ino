@@ -19,11 +19,11 @@
 
 // --- Wi-Fi and Static IP Configuration ---
 //Put your SSID in here Below
-String userSSID = "YOURSSID";
+String userSSID = "YourSSID";
 //Put your Password for your SSID below
-String userPassword = "YOURSSIDPASSWORD";
+String userPassword = "YourWifiAddress";
 bool useHardcodedIP = true; // Set to true to use static IP below
-IPAddress hardcodedIP(192, 168, 1, 181);
+IPAddress hardcodedIP(192, 168, 1, 100);
 IPAddress hardcodedGW(192, 168, 1, 1);
 IPAddress hardcodedSN(255, 255, 255, 0);
 
@@ -270,18 +270,6 @@ void handleApiLogGet() {
   server.send(200, "text/plain", logData);
 }
 
-// Add this above setupWebServer() with your other handlers
-void handleClearLog() {
-  if (LittleFS.exists(logFile)) {
-    LittleFS.remove(logFile);
-    File log = LittleFS.open(logFile, "w");
-    log.close();
-    server.send(200, "text/plain", "Log file cleared.");
-  } else {
-    server.send(200, "text/plain", "No log file found.");
-  }
-}
-
 // --- Webserver ---
 
 void setupWebServer() {
@@ -320,7 +308,6 @@ server.on("/api/cards", HTTP_DELETE, handleApiCardsDelete);
 server.on("/api/trigger", HTTP_POST, handleApiTrigger);
 server.on("/api/mode", HTTP_POST, handleApiModePost);
 server.on("/api/log", HTTP_GET, handleApiLogGet);
-server.on("/clearlog", HTTP_POST, handleClearLog);
 
 //	•	Get status: GET http://esp32.local/api/status
 //	•	Add card: POST http://esp32.local/api/cards with body card=123456
@@ -427,7 +414,7 @@ void setup() {
 
     String cardType = (wg.getWiegandType() == 26) ? "Wiegand26" : "Unknown";
     appendLogEntry(lastCardData, lastFacilityCode, lastCardNumber, cardType);
-  delay(100);
+  delay(1000);
 
   pinMode(BEEPER_PIN, OUTPUT);
   digitalWrite(BEEPER_PIN, HIGH);
@@ -493,21 +480,18 @@ void loop() {
         // Check authorization and display result
         bool authorized = isAuthorized(lastCardData);
 
-        display.display();
         display.setTextSize(2);
         display.setCursor(0, 50); // Lower part of OLED
         if (authorized) {
           display.println("AUTHORIZED");
-          display.display();
           digitalWrite(SIGNAL_PIN, HIGH);
           delay(5000);
           digitalWrite(SIGNAL_PIN, LOW);
         } else {
           display.println("NO ENTRY");
-          display.display();
           // Door is not triggered
         }
-       // display.display();
+        display.display();
 
         // Log every scan in DOOR MODE (authorized or not)
         String cardType = (wg.getWiegandType() == 26) ? "Wiegand26" : "Unknown";
