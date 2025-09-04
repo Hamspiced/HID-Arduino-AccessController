@@ -30,6 +30,9 @@ Optional (if you want to add a Relay and Door Striker/Mag Lock
  [USB-C PD Trigger Board](https://a.co/d/3NxkBei) $9.98 for 4 or $2.50 ea
  
  [12v Door Strike](https://a.co/d/8t9gDx0) $64.19 each
+ 
+ [12v Pin Deadbolt (used in my Test Bench)]([https://a.co/d/8t9gDx0](https://www.aliexpress.us/item/3256804840295067.html)) $64.19 each
+
 
 ## 3d Printed Cases
 
@@ -44,6 +47,9 @@ Optional (if you want to add a Relay and Door Striker/Mag Lock
  
  [R10 Case STL - Bottom](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R10_Case_bottom.stl)
  
+ [R10 Case with MagLock STL - Top](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R10_MaglockCase_Top.stl)
+ 
+ [R10 Case With Maglock STL - Bottom](https://github.com/Hamspiced/HID-Arduino-AccessController/blob/main/Cases/R10_MaglockCase_bottom.stl)
 
 ## 📌 ARDUINO Pinout Connections
 
