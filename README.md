@@ -31,7 +31,7 @@ Optional (if you want to add a Relay and Door Striker/Mag Lock
  
  [12v Door Strike](https://a.co/d/8t9gDx0) $64.19 each
  
- [12v Pin Deadbolt (used in my Test Bench)]([https://a.co/d/8t9gDx0](https://www.aliexpress.us/item/3256804840295067.html)) $64.19 each
+ [12v Pin Deadbolt (used in my Test Bench)](https://www.aliexpress.us/item/3256804840295067.html) $10.00 each
 
 
 ## 3d Printed Cases
