@@ -19,11 +19,14 @@
 #define EEPROM_CARD_DATA_ADDR 4
 #define CARD_SIZE sizeof(unsigned long)
 
-#define ADMIN_UID_DEFAULT 253411519UL
+#define ADMIN_UID_DEFAULT 1041238720UL
 #define EEPROM_ADMIN_UID_ADDR (EEPROM_CARD_DATA_ADDR + (MAX_CARDS * CARD_SIZE))
 
 // Set to 0 to silence all Serial output
 #define ENABLE_SERIAL 0
+
+#define EEPROM_ADMIN_FLAG_ADDR (EEPROM_ADMIN_UID_ADDR + 4)
+#define ENROLLED_FLAG_VALUE 0xA5
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 WIEGAND wg;
@@ -127,21 +130,72 @@ const char* modeName(uint8_t mode) {
   }
 }
 
+void displayEnrollPrompt() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.println("ADMIN ENROLL");
+  display.setCursor(0, 20);
+  display.println("Scan Admin Card...");
+  display.display();
+  cardDisplayed = false;
+  promptDisplayed = true;
+}
+
+void enrollAdminIfNeeded() {
+  if (adminUID != 0UL) return;
+  displayEnrollPrompt();
+  while (adminUID == 0UL) {
+    if (wg.available()) {
+      unsigned long cardData = wg.getCode();
+      adminUID = cardData;
+      saveAdminUID(adminUID);
+      digitalWrite(BEEPER_PIN, LOW);
+      delay(200);
+      digitalWrite(BEEPER_PIN, HIGH);
+      display.clearDisplay();
+      display.setTextSize(2);
+      display.setCursor(8, 0);
+      display.println("ADMIN");
+      display.setTextSize(1);
+      display.setCursor(0, 24);
+      display.println("Admin Card Saved");
+      display.setCursor(0, 40);
+      display.print("UID: 0x");
+      display.println(adminUID, HEX);
+      display.display();
+      delay(1500);
+      promptDisplayed = false;
+      break;
+    }
+  }
+}
+
 unsigned long loadAdminUID() {
   unsigned long uid = 0;
   for (uint8_t i = 0; i < 4; i++) {
     uid |= (unsigned long)EEPROM.read(EEPROM_ADMIN_UID_ADDR + i) << (8 * i);
   }
-  if (uid == 0xFFFFFFFFUL || uid == 0UL) {
-    return ADMIN_UID_DEFAULT;
+  uint8_t flag = EEPROM.read(EEPROM_ADMIN_FLAG_ADDR);
+  if (flag == ENROLLED_FLAG_VALUE) {
+    if (uid != 0UL && uid != 0xFFFFFFFFUL) {
+      return uid;
+    }
+    return 0UL;
   }
-  return uid;
+  // Backward compatibility: if UID exists but flag missing, set flag
+  if (uid != 0UL && uid != 0xFFFFFFFFUL) {
+    EEPROM.update(EEPROM_ADMIN_FLAG_ADDR, ENROLLED_FLAG_VALUE);
+    return uid;
+  }
+  return 0UL;
 }
 
 void saveAdminUID(unsigned long uid) {
   for (uint8_t i = 0; i < 4; i++) {
     EEPROM.update(EEPROM_ADMIN_UID_ADDR + i, (uid >> (8 * i)) & 0xFF);
   }
+  EEPROM.update(EEPROM_ADMIN_FLAG_ADDR, ENROLLED_FLAG_VALUE);
 }
 
 void appendLogEntry(unsigned long raw, uint8_t fc, uint16_t id) {
@@ -236,14 +290,17 @@ void setup() {
   Serial.print(" BEEPER:"); Serial.print(BEEPER_PIN);
   Serial.print(" SIGNAL:"); Serial.println(SIGNAL_PIN);
   #endif
-  displayScanPrompt();
-
   wg.begin(WIEGAND_D0_PIN, WIEGAND_D1_PIN);
 
   pinMode(BEEPER_PIN, OUTPUT);
   digitalWrite(BEEPER_PIN, HIGH);
   pinMode(SIGNAL_PIN, OUTPUT);
   digitalWrite(SIGNAL_PIN, LOW);
+
+  // Prompt for admin enrollment if needed
+  enrollAdminIfNeeded();
+
+  displayScanPrompt();
 }
 
 void loop() {
