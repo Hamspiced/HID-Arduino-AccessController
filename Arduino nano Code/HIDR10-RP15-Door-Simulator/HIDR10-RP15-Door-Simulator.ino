@@ -1,3 +1,10 @@
+/*
+  HID RFID Door Simulator (Arduino Nano)
+  - Modes: READ, DOOR (relay), ADD, REMOVE
+  - First-boot admin enrollment stored in EEPROM
+  - Authorized card list stored in EEPROM
+  - OLED status prompts, Wiegand reader, beeper, door strike signal
+*/
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -16,14 +23,22 @@
 
 #define MAX_CARDS 20
 #define EEPROM_CARD_COUNT_ADDR 0
+// EEPROM layout summary:
+//   [0]                : cardCount (1 byte)
+//   [4..]              : authorized cards table (MAX_CARDS * 4 bytes)
+//   [EEPROM_ADMIN_UID] : 4 bytes admin UID
+//   [EEPROM_ADMIN_FLAG]: 1 byte 0xA5 when admin enrolled
 #define EEPROM_CARD_DATA_ADDR 4
 #define CARD_SIZE sizeof(unsigned long)
 
-#define ADMIN_UID_DEFAULT 253411519UL
+#define ADMIN_UID_DEFAULT 1041238720UL
 #define EEPROM_ADMIN_UID_ADDR (EEPROM_CARD_DATA_ADDR + (MAX_CARDS * CARD_SIZE))
 
 // Set to 0 to silence all Serial output
 #define ENABLE_SERIAL 0
+
+#define EEPROM_ADMIN_FLAG_ADDR (EEPROM_ADMIN_UID_ADDR + 4)
+#define ENROLLED_FLAG_VALUE 0xA5
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 WIEGAND wg;
@@ -43,6 +58,7 @@ uint8_t currentMode = MODE_READ;
 
 unsigned long adminUID = ADMIN_UID_DEFAULT;
 
+// Special Wiegand values used to directly select a mode
 const unsigned long configCards[4] = {
   0x1E6DC032, // Read mode
   0x1E6D9861, // Door mode
@@ -53,6 +69,7 @@ const unsigned long configCards[4] = {
 unsigned long authorizedCards[MAX_CARDS];
 uint8_t cardCount = 0;
 
+// Returns an approximate bit length for the provided value
 uint8_t countBits(uint32_t data) {
   uint8_t count = 0;
   while (data) {
@@ -87,6 +104,7 @@ void saveAuthorizedCards() {
   }
 }
 
+// True if cardData exists in authorizedCards
 bool isAuthorized(unsigned long cardData) {
   for (uint8_t i = 0; i < cardCount; i++) {
     if (authorizedCards[i] == cardData) {
@@ -96,6 +114,7 @@ bool isAuthorized(unsigned long cardData) {
   return false;
 }
 
+// Append card to list if not duplicate and space remains
 void addCard(unsigned long cardData) {
   if (cardCount < MAX_CARDS && !isAuthorized(cardData)) {
     authorizedCards[cardCount] = cardData;
@@ -104,6 +123,7 @@ void addCard(unsigned long cardData) {
   }
 }
 
+// Remove first matching entry from list and compact
 void removeCard(unsigned long cardData) {
   for (uint8_t i = 0; i < cardCount; i++) {
     if (authorizedCards[i] == cardData) {
@@ -127,21 +147,74 @@ const char* modeName(uint8_t mode) {
   }
 }
 
+// Enrollment banner to capture admin UID on first boot
+void displayEnrollPrompt() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.println("ADMIN ENROLL");
+  display.setCursor(0, 20);
+  display.println("Scan Admin Card...");
+  display.display();
+  cardDisplayed = false;
+  promptDisplayed = true;
+}
+
+// If no admin is enrolled, block until a card is scanned and save as admin
+void enrollAdminIfNeeded() {
+  if (adminUID != 0UL) return;
+  displayEnrollPrompt();
+  while (adminUID == 0UL) {
+    if (wg.available()) {
+      unsigned long cardData = wg.getCode();
+      adminUID = cardData;
+      saveAdminUID(adminUID);
+      digitalWrite(BEEPER_PIN, LOW);
+      delay(200);
+      digitalWrite(BEEPER_PIN, HIGH);
+      display.clearDisplay();
+      display.setTextSize(2);
+      display.setCursor(8, 0);
+      display.println("ADMIN");
+      display.setTextSize(1);
+      display.setCursor(0, 24);
+      display.println("Admin Card Saved");
+      display.setCursor(0, 40);
+      display.print("UID: 0x");
+      display.println(adminUID, HEX);
+      display.display();
+      delay(1500);
+      promptDisplayed = false;
+      break;
+    }
+  }
+}
+
 unsigned long loadAdminUID() {
   unsigned long uid = 0;
   for (uint8_t i = 0; i < 4; i++) {
     uid |= (unsigned long)EEPROM.read(EEPROM_ADMIN_UID_ADDR + i) << (8 * i);
   }
-  if (uid == 0xFFFFFFFFUL || uid == 0UL) {
-    return ADMIN_UID_DEFAULT;
+  uint8_t flag = EEPROM.read(EEPROM_ADMIN_FLAG_ADDR);
+  if (flag == ENROLLED_FLAG_VALUE) {
+    if (uid != 0UL && uid != 0xFFFFFFFFUL) {
+      return uid;
+    }
+    return 0UL;
   }
-  return uid;
+  // Backward compatibility: if UID exists but flag missing, set flag
+  if (uid != 0UL && uid != 0xFFFFFFFFUL) {
+    EEPROM.update(EEPROM_ADMIN_FLAG_ADDR, ENROLLED_FLAG_VALUE);
+    return uid;
+  }
+  return 0UL;
 }
 
 void saveAdminUID(unsigned long uid) {
   for (uint8_t i = 0; i < 4; i++) {
     EEPROM.update(EEPROM_ADMIN_UID_ADDR + i, (uid >> (8 * i)) & 0xFF);
   }
+  EEPROM.update(EEPROM_ADMIN_FLAG_ADDR, ENROLLED_FLAG_VALUE);
 }
 
 void appendLogEntry(unsigned long raw, uint8_t fc, uint16_t id) {
@@ -156,6 +229,7 @@ void appendLogEntry(unsigned long raw, uint8_t fc, uint16_t id) {
   #endif
 }
 
+// Render the idle screen and await next card
 void displayScanPrompt() {
   display.clearDisplay();
   display.setTextSize(2);
@@ -174,6 +248,7 @@ void displayScanPrompt() {
   promptDisplayed = true;
 }
 
+// Render a scan result; in READ mode show details, otherwise show a status message
 void displayCardData(unsigned long cardData, uint8_t bitLength, uint8_t facilityCode, uint16_t cardNumber, const char* message = "") {
   display.clearDisplay();
   display.setTextSize(2);
@@ -204,6 +279,7 @@ void displayCardData(unsigned long cardData, uint8_t bitLength, uint8_t facility
   promptDisplayed = false;
 }
 
+// Initialize hardware, restore state, and enroll admin if needed
 void setup() {
   #if ENABLE_SERIAL
   Serial.begin(115200);
@@ -236,16 +312,20 @@ void setup() {
   Serial.print(" BEEPER:"); Serial.print(BEEPER_PIN);
   Serial.print(" SIGNAL:"); Serial.println(SIGNAL_PIN);
   #endif
-  displayScanPrompt();
-
   wg.begin(WIEGAND_D0_PIN, WIEGAND_D1_PIN);
 
   pinMode(BEEPER_PIN, OUTPUT);
   digitalWrite(BEEPER_PIN, HIGH);
   pinMode(SIGNAL_PIN, OUTPUT);
   digitalWrite(SIGNAL_PIN, LOW);
+
+  // Prompt for admin enrollment if needed
+  enrollAdminIfNeeded();
+
+  displayScanPrompt();
 }
 
+// Core event loop: mode switching and scan handling
 void loop() {
   if (wg.available()) {
     unsigned long cardData = wg.getCode();
