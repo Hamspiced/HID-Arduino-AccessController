@@ -1,3 +1,10 @@
+/*
+  HID RFID Door Simulator (Arduino Nano)
+  - Modes: READ, DOOR (relay), ADD, REMOVE
+  - First-boot admin enrollment stored in EEPROM
+  - Authorized card list stored in EEPROM
+  - OLED status prompts, Wiegand reader, beeper, door strike signal
+*/
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -16,6 +23,11 @@
 
 #define MAX_CARDS 20
 #define EEPROM_CARD_COUNT_ADDR 0
+// EEPROM layout summary:
+//   [0]                : cardCount (1 byte)
+//   [4..]              : authorized cards table (MAX_CARDS * 4 bytes)
+//   [EEPROM_ADMIN_UID] : 4 bytes admin UID
+//   [EEPROM_ADMIN_FLAG]: 1 byte 0xA5 when admin enrolled
 #define EEPROM_CARD_DATA_ADDR 4
 #define CARD_SIZE sizeof(unsigned long)
 
@@ -46,6 +58,7 @@ uint8_t currentMode = MODE_READ;
 
 unsigned long adminUID = ADMIN_UID_DEFAULT;
 
+// Special Wiegand values used to directly select a mode
 const unsigned long configCards[4] = {
   0x1E6DC032, // Read mode
   0x1E6D9861, // Door mode
@@ -56,6 +69,7 @@ const unsigned long configCards[4] = {
 unsigned long authorizedCards[MAX_CARDS];
 uint8_t cardCount = 0;
 
+// Returns an approximate bit length for the provided value
 uint8_t countBits(uint32_t data) {
   uint8_t count = 0;
   while (data) {
@@ -90,6 +104,7 @@ void saveAuthorizedCards() {
   }
 }
 
+// True if cardData exists in authorizedCards
 bool isAuthorized(unsigned long cardData) {
   for (uint8_t i = 0; i < cardCount; i++) {
     if (authorizedCards[i] == cardData) {
@@ -99,6 +114,7 @@ bool isAuthorized(unsigned long cardData) {
   return false;
 }
 
+// Append card to list if not duplicate and space remains
 void addCard(unsigned long cardData) {
   if (cardCount < MAX_CARDS && !isAuthorized(cardData)) {
     authorizedCards[cardCount] = cardData;
@@ -107,6 +123,7 @@ void addCard(unsigned long cardData) {
   }
 }
 
+// Remove first matching entry from list and compact
 void removeCard(unsigned long cardData) {
   for (uint8_t i = 0; i < cardCount; i++) {
     if (authorizedCards[i] == cardData) {
@@ -130,6 +147,7 @@ const char* modeName(uint8_t mode) {
   }
 }
 
+// Enrollment banner to capture admin UID on first boot
 void displayEnrollPrompt() {
   display.clearDisplay();
   display.setTextSize(1);
@@ -142,6 +160,7 @@ void displayEnrollPrompt() {
   promptDisplayed = true;
 }
 
+// If no admin is enrolled, block until a card is scanned and save as admin
 void enrollAdminIfNeeded() {
   if (adminUID != 0UL) return;
   displayEnrollPrompt();
@@ -210,6 +229,7 @@ void appendLogEntry(unsigned long raw, uint8_t fc, uint16_t id) {
   #endif
 }
 
+// Render the idle screen and await next card
 void displayScanPrompt() {
   display.clearDisplay();
   display.setTextSize(2);
@@ -228,6 +248,7 @@ void displayScanPrompt() {
   promptDisplayed = true;
 }
 
+// Render a scan result; in READ mode show details, otherwise show a status message
 void displayCardData(unsigned long cardData, uint8_t bitLength, uint8_t facilityCode, uint16_t cardNumber, const char* message = "") {
   display.clearDisplay();
   display.setTextSize(2);
@@ -258,6 +279,7 @@ void displayCardData(unsigned long cardData, uint8_t bitLength, uint8_t facility
   promptDisplayed = false;
 }
 
+// Initialize hardware, restore state, and enroll admin if needed
 void setup() {
   #if ENABLE_SERIAL
   Serial.begin(115200);
@@ -303,6 +325,7 @@ void setup() {
   displayScanPrompt();
 }
 
+// Core event loop: mode switching and scan handling
 void loop() {
   if (wg.available()) {
     unsigned long cardData = wg.getCode();
