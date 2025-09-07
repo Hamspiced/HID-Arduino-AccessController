@@ -139,6 +139,27 @@ TODO: Scanning the remove mode card 3 times will reset all added cards (not mode
 
 
 
+# Configuring the Admin UID (Arduino Nano)
+
+The Arduino Nano build uses an Admin card to cycle modes (READ → DOOR → ADD → DEL). To set your own Admin UID:
+
+1) Get your card's UID
+- Put the Nano in READ MODE and scan the card. The OLED shows the HEX UID as “Card: 0x…”. Convert that HEX to decimal, or temporarily enable Serial to print the decimal (see step 2).
+
+2) Optional: enable Serial to view the decimal UID
+- In `Arduino nano Code/HIDR10-RP15-Door-Simulator/HIDR10-RP15-Door-Simulator.ino`, set `#define ENABLE_SERIAL 1`. Upload, open Serial Monitor at 115200, scan the card, note the `RAW` decimal, then set `ENABLE_SERIAL` back to 0 if desired.
+
+3) Set the Admin UID
+- In the same file, edit the line:
+  `#define ADMIN_UID_DEFAULT 253411519UL`
+  Replace `253411519UL` with your card's decimal UID and keep the `UL` suffix.
+
+4) Upload the sketch
+- Upload to your Nano. On boot, the Admin UID will be used to detect admin scans and cycle modes.
+
+Notes
+- The Admin UID is read from EEPROM if present; when EEPROM is blank, the compiled `ADMIN_UID_DEFAULT` is used. If you later change the default and re-upload, the new default will take effect without any extra steps.
+
 # ESP32 Installation
 
 I use Arduino IDE for the ESP32.  I had to download the ESP32Little Fs plugin for Arduino IDE 2.x.   More information on it can be found from [earlephilhower's Github](https://github.com/earlephilhower/arduino-littlefs-upload) the TL;DR is: 
