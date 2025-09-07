@@ -9,7 +9,10 @@ The ESP32 Portion of this project will do all of the same as well as connect to 
 
 
 ## Parts
+
  [Arduino Nano](https://a.co/d/4Q9VMcR) - $16.49 per 3 or $5.49 ea
+ or
+ [Esp32 Dev board](https://a.co/d/32qhvlW) - $29 for 5 or 5.50$ each
  
  [USB-C Pigtail](https://a.co/d/i3n7h48) - $7.99 per 10 or $0.80 ea
  
